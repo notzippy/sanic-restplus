@@ -47,6 +47,9 @@ prof/
 .project
 .pydevproject
 
+#idea
+.idea
+
 # Rope
 .ropeproject
 
@@ -58,4 +61,4 @@ prof/
 doc/_build/
 
 # Specifics
-flask_restplus/static/bower
+sanic_restplus/static/bower

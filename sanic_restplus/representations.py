@@ -3,12 +3,11 @@ from __future__ import unicode_literals, absolute_import
 
 from json import dumps
 
-from flask import make_response, current_app
+from sanic.response import text
 
-
-def output_json(data, code, headers=None):
+def output_json(request, data, code, headers=None):
     '''Makes a Flask response with a JSON encoded body'''
-
+    current_app = request.app
     settings = current_app.config.get('RESTPLUS_JSON', {})
 
     # If we're in debug mode, and the indent is not set, we set it to a
@@ -21,6 +20,6 @@ def output_json(data, code, headers=None):
     # see https://github.com/mitsuhiko/flask/pull/1262
     dumped = dumps(data, **settings) + "\n"
 
-    resp = make_response(dumped, code)
-    resp.headers.extend(headers or {})
+    resp = text(dumped, code, content_type='application/json')
+    resp.headers.update(headers or {})
     return resp

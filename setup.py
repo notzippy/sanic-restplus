@@ -49,7 +49,7 @@ tests_require = [
     'pytest', 'pytest-sugar', 'pytest-flask', 'pytest-mock', 'pytest-faker', 'pytest-benchmark==3.1.0a2',
     'blinker', 'tzlocal', 'mock'
 ]
-install_requires = ['Sanic>=0.4.1', 'sanic-jinja2', 'six>=1.3.0', 'pytz', 'aniso8601>=0.82', 'jsonschema']
+install_requires = ['sanic>=0.5.2', 'sanic-jinja2>=0.5.1', 'six>=1.3.0', 'pytz', 'aniso8601>=0.82', 'jsonschema']
 doc_require = ['sphinx', 'alabaster', 'sphinx_issues']
 qa_require = ['pytest-cover', 'flake8']
 ci_require = ['invoke>=0.13'] + qa_require + tests_require

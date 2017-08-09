@@ -249,7 +249,7 @@ class Api(object):
             self._register_view(
                 app_or_blueprint,
                 SwaggerView,
-                self.prefix + '/swagger.json',
+                '/swagger.json',
                 endpoint=endpoint,
                 resource_class_args=(self, )
             )

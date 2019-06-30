@@ -4,12 +4,7 @@ from sanic import exceptions
 
 from ._http import HTTPStatus
 
-__all__ = (
-    'abort',
-    'RestError',
-    'ValidationError',
-    'SpecsError',
-)
+__all__ = ("abort", "RestError", "ValidationError", "SpecsError")
 
 
 def abort(code=HTTPStatus.INTERNAL_SERVER_ERROR, message=None, **kwargs):
@@ -24,11 +19,19 @@ def abort(code=HTTPStatus.INTERNAL_SERVER_ERROR, message=None, **kwargs):
     :param kwargs: Any additional data to pass to the error payload
     :raise HTTPException:
     """
-    raise exceptions.SanicException(message=message, status_code=code)
+
+    try:
+        exceptions.abort(status_code=code, message=message)
+    except Exception as ex:
+        data = {"message": message, **kwargs} if message else {**kwargs}
+        if data:
+            ex.data = data
+        raise ex
 
 
 class RestError(Exception):
     """Base class for all Flask-Restplus Errors"""
+
     def __init__(self, msg):
         self.msg = msg
 
@@ -38,9 +41,11 @@ class RestError(Exception):
 
 class ValidationError(RestError):
     """An helper class for validation errors."""
+
     pass
 
 
 class SpecsError(RestError):
     """An helper class for incoherent specifications."""
+
     pass

@@ -7,6 +7,7 @@ import pytest
 from sanic import Sanic, Blueprint
 from sanic.testing import SanicTestClient
 from spf import SanicPluginsFramework
+from sanic_cors import CORS
 
 from sanic_restplus.restplus import restplus as restplus_plugin
 import sanic_restplus as restplus
@@ -35,6 +36,8 @@ class TestClient(SanicTestClient):
 @pytest.fixture
 def app():
     app = Sanic(__name__)
+    app.config.CORS_AUTOMATIC_OPTIONS = True
+    CORS(app)
     spf = SanicPluginsFramework(app)
     app.restplus_plugin = spf.register_plugin(restplus_plugin)
     app.test_client_class = TestClient

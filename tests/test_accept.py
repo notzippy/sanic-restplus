@@ -10,6 +10,15 @@ class Foo(restplus.Resource):
 
 
 class ErrorsTest(object):
+    async def test_accept_default_application_json(self, app, client):
+        api = restplus.Api()
+        api.add_resource(Foo, "/test/")
+        app.restplus_plugin.api(api)
+
+        res = await client.get("/test/", headers={"Accept": ""})
+        assert res.status == 406
+        assert res.content_type == "text/plain"
+
     async def test_accept_application_json_by_default(self, app, client):
         api = restplus.Api()
         api.add_resource(Foo, "/test/")
@@ -184,14 +193,5 @@ class ErrorsTest(object):
         app.restplus_plugin.api(api)
 
         res = await client.get("/test/", headers={"Accept": "null"})
-        assert res.status == 406
-        assert res.content_type == "text/plain"
-
-    async def test_accept_default_application_json(self, app, client):
-        api = restplus.Api()
-        api.add_resource(Foo, "/test/")
-        app.restplus_plugin.api(api)
-
-        res = await client.get("/test/", headers={"Accept": ""})
         assert res.status == 406
         assert res.content_type == "text/plain"

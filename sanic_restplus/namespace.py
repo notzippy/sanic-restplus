@@ -231,6 +231,7 @@ class Namespace(object):
         :param int code: Optionally give the expected HTTP response code if its different from 200
 
         '''
+        code = int(code)
         doc = {
             'responses': {
                 str(code): (description, [fields]) if as_list else (description, fields)

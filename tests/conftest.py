@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
 import pytest
 
 from sanic import Sanic, Blueprint
-from sanic.testing import SanicTestClient
 from sanic.websocket import WebSocketProtocol
 from spf import SanicPluginsFramework
 import sanic_restplus

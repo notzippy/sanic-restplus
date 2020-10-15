@@ -14,20 +14,11 @@ class ErrorsTest(object):
         with pytest.raises(SanicException):
             abort(404)
 
-    def test_abort_data(self):
-        with pytest.raises(SanicException) as cm:
-            abort(404, foo='bar')
-        assert cm.value.data == {'foo': 'bar'}
-
-    def test_abort_no_data(self):
-        with pytest.raises(SanicException) as cm:
-            abort(404)
-        assert not hasattr(cm.value, 'data')
 
     def test_abort_custom_message(self):
         with pytest.raises(SanicException) as cm:
             abort(404, 'My message')
-        assert cm.value.data['message'] == 'My message'
+        assert cm.value.args[0] == 'My message'
 
     async def test_abort_code_only_with_defaults(self, app, client):
         api = sanic_restplus.Api(app)

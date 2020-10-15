@@ -295,7 +295,7 @@ class URLTest(object):
         assert validator('http://www.google.com') == 'http://www.google.com', 'Should check domain'
 
         # This test will fail on a network where this address is defined
-        self.assert_bad_url(validator, 'http://this-domain-should-not-exist.com', 'Domain does not exists')
+        self.assert_bad_url(validator, 'http://this-domain-should-not-exist.com', 'Domain does not exist')
 
     def test_schema(self):
         assert inputs.URL().__schema__ == {'type': 'string', 'format': 'url'}

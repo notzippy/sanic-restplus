@@ -114,6 +114,7 @@ def unpack(response, default_code=HTTPStatus.OK):
     :rtype: tuple
     :raise ValueError: if the response does not have one of the expected format
     '''
+    default_code = int(default_code)
     if not isinstance(response, tuple):
         # data only
         return response, default_code, {}

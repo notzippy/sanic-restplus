@@ -1070,7 +1070,7 @@ class SwaggerView(Resource):
     '''Render the Swagger specifications as JSON'''
     def get(self, request):
         schema = self.api.__schema__
-        return schema, HTTPStatus.INTERNAL_SERVER_ERROR if 'error' in schema else HTTPStatus.OK
+        return schema, HTTPStatus.INTERNAL_SERVER_ERROR.value if 'error' in schema else HTTPStatus.OK.value
 
     def mediatypes(self):
         return ['application/json']
@@ -1078,9 +1078,9 @@ class SwaggerView(Resource):
 
 def mask_parse_error_handler(error):
     '''When a mask can't be parsed'''
-    return {'message': 'Mask parse error: {0}'.format(error)}, HTTPStatus.BAD_REQUEST
+    return {'message': 'Mask parse error: {0}'.format(error)}, HTTPStatus.BAD_REQUEST.value
 
 
 def mask_error_handler(error):
     '''When any error occurs on mask'''
-    return {'message': 'Mask error: {0}'.format(error)}, HTTPStatus.BAD_REQUEST
+    return {'message': 'Mask error: {0}'.format(error)}, HTTPStatus.BAD_REQUEST.value

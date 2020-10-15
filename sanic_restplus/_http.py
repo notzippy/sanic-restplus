@@ -21,9 +21,16 @@ class HTTPStatus(IntEnum):
         * RFC 2774: An HTTP Extension Framework
     """
     def __new__(cls, value, phrase, description=''):
+        """
+        :param value:
+        :type value: int
+        :param phrase:
+        :type phrase: str
+        :param description:
+        :type description: str
+        """
         obj = int.__new__(cls, value)
         obj._value_ = value
-
         obj.phrase = phrase
         obj.description = description
         return obj
@@ -37,6 +44,8 @@ class HTTPStatus(IntEnum):
     def __eq__(self, other):
         if isinstance(other, HTTPStatus):
             return self.value == other.value
+        elif isinstance(other, int):
+            return self.value == other
         elif isinstance(other, (tuple, list)) and len(other) > 1:
             return self.value == other[0]
         return False
@@ -44,6 +53,8 @@ class HTTPStatus(IntEnum):
     def __gt__(self, other):
         if isinstance(other, HTTPStatus):
             return self.value > other.value
+        elif isinstance(other, int):
+            return self.value > other
         elif isinstance(other, (tuple, list)) and len(other) > 1:
             return self.value > other[0]
         return False
@@ -51,6 +62,8 @@ class HTTPStatus(IntEnum):
     def __ge__(self, other):
         if isinstance(other, HTTPStatus):
             return self.value >= other.value
+        elif isinstance(other, int):
+            return self.value >= other
         elif isinstance(other, (tuple, list)) and len(other) > 1:
             return self.value >= other[0]
         return False
@@ -58,6 +71,8 @@ class HTTPStatus(IntEnum):
     def __lt__(self, other):
         if isinstance(other, HTTPStatus):
             return self.value < other.value
+        elif isinstance(other, int):
+            return self.value < other
         elif isinstance(other, (tuple, list)) and len(other) > 1:
             return self.value < other[0]
         return False
@@ -65,6 +80,8 @@ class HTTPStatus(IntEnum):
     def __le__(self, other):
         if isinstance(other, HTTPStatus):
             return self.value <= other.value
+        elif isinstance(other, int):
+            return self.value <= other
         elif isinstance(other, (tuple, list)) and len(other) > 1:
             return self.value <= other[0]
         return False

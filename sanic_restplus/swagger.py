@@ -522,7 +522,7 @@ class Swagger(object):
                         responses[code]['schema'] = self.serialize_schema(model)
                     self.process_headers(responses[code], doc, method, kwargs.get('headers'))
             if 'model' in d:
-                code = str(d.get('default_code', HTTPStatus.OK))
+                code = str(d.get('default_code', HTTPStatus.OK.value))
                 if code not in responses:
                     responses[code] = self.process_headers(DEFAULT_RESPONSE.copy(), doc, method)
                 responses[code]['schema'] = self.serialize_schema(d['model'])

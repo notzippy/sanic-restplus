@@ -23,9 +23,12 @@ from sanic_jinja2 import SanicJinja2
 from spf.plugin import FutureRoute, FutureStatic
 
 try:
-    from sanic.response import ALL_STATUS_CODES
+    from sanic.helpers import STATUS_CODES as ALL_STATUS_CODES
 except ImportError:
-    from sanic.response import STATUS_CODES as ALL_STATUS_CODES
+    try:
+        from sanic.response import ALL_STATUS_CODES
+    except ImportError:
+        from sanic.response import STATUS_CODES as ALL_STATUS_CODES
 from sanic.handlers import ErrorHandler
 from sanic.exceptions import SanicException, InvalidUsage, NotFound
 from sanic import exceptions, Sanic, Blueprint

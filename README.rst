@@ -23,6 +23,8 @@ Sanic-RestPlus version 0.4.1 (and previous versions) **does not work** on Sanic 
 
 Please use latest Sanic-Restplus (v0.5.3 or greater) if you need to deploy on Sanic v19.12+.
 
+If you are using the new Sanic v20.12LTS, please use Sanic-RestPlus v0.5.5 or greater.
+
 
 Installation
 ============

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import copy
 import sanic_restplus
 from sanic import Blueprint
-from sanic_restplus import restplus
+from sanic_restplus import restplus, Namespace
 
 
 class APITest(object):
@@ -250,7 +250,7 @@ class APITest(object):
 
     def test_ns_path_prefixes(self, app):
         api = sanic_restplus.Api()
-        ns = restplus.Namespace('test_ns', description='Test namespace')
+        ns = Namespace('test_ns', description='Test namespace')
 
         @ns.route('/test/', endpoint='test_resource')
         class TestResource(sanic_restplus.Resource):
@@ -282,8 +282,8 @@ class APITest(object):
                 }
             }
         }
-        ns1 = restplus.Namespace('ns1', authorizations=a1)
-        ns2 = restplus.Namespace('ns2', authorizations=a2)
+        ns1 = Namespace('ns1', authorizations=a1)
+        ns2 = Namespace('ns2', authorizations=a2)
 
         @ns1.route('/')
         class Ns1(sanic_restplus.Resource):

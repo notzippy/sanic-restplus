@@ -3,6 +3,7 @@ import pytest
 
 from sanic import Sanic, Blueprint
 from sanic.websocket import WebSocketProtocol
+from uuid import uuid4
 from spf import SanicPluginsFramework
 import sanic_restplus
 from sanic_restplus import restplus
@@ -28,7 +29,8 @@ from sanic_restplus import restplus
 
 @pytest.fixture
 def app():
-    app = Sanic(__name__)
+    guid = str(uuid4())
+    app = Sanic(__name__+guid)
     #app.test_client_class = TestClient
     spf = SanicPluginsFramework(app)
     spf.register_plugin(restplus)
@@ -52,8 +54,9 @@ def api(request, app):
     yield api
 
 @pytest.fixture
-def client(loop, app, sanic_client):
-    return loop.run_until_complete(sanic_client(app, protocol=WebSocketProtocol))
+def client(app):
+    return app.test_client
+    #return loop.run_until_complete(sanic_client(app, protocol=WebSocketProtocol))
 
 @pytest.fixture(autouse=True)
 def _push_custom_request_context(request):

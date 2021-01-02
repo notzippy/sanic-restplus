@@ -197,7 +197,7 @@ class ErrorsTest(object):
     async def test_errorhandler_with_namespace(self, app, client):
         api = sanic_restplus.Api(app)
 
-        ns = restplus.Namespace("ExceptionHandler", path="/")
+        ns = sanic_restplus.Namespace("ExceptionHandler", path="/")
 
         class CustomException(RuntimeError):
             pass

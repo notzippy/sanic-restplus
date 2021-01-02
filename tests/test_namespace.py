@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from sanic_restplus import restplus
-
-from sanic_restplus import Namespace, Model, OrderedModel
+from sanic_restplus import Namespace, Model, OrderedModel, Api, Resource, fields, reqparse
 
 
 class NamespaceTest(object):
     def test_parser(self):
         api = Namespace('test')
-        assert isinstance(api.parser(), restplus.reqparse.RequestParser)
+        assert isinstance(api.parser(), reqparse.RequestParser)
 
     def test_doc_decorator(self):
         api = Namespace('test')
         params = {'q': {'description': 'some description'}}
 
         @api.doc(params=params)
-        class TestResource(sanic_restplus.Resource):
+        class TestResource(Resource):
             pass
 
         assert hasattr(TestResource, '__apidoc__')
@@ -28,7 +26,7 @@ class NamespaceTest(object):
         child_params = {'q': {'description': 'some new description'}, 'other': {'description': 'another param'}}
 
         @api.doc(params=base_params)
-        class BaseResource(sanic_restplus.Resource):
+        class BaseResource(Resource):
             pass
 
         @api.doc(params=child_params)
@@ -106,21 +104,21 @@ class NamespaceTest(object):
         assert 'Child' in api.models
 
     def test_api_payload(self, app, client):
-        api = sanic_restplus.Api(app, validate=True)
-        ns = restplus.Namespace('apples')
+        api = Api(app, validate=True)
+        ns = Namespace('apples')
         api.add_namespace(ns)
 
-        fields = ns.model('Person', {
-            'name': restplus.fields.String(required=True),
-            'age': restplus.fields.Integer,
-            'birthdate': restplus.fields.DateTime,
+        f = ns.model('Person', {
+            'name': fields.String(required=True),
+            'age': fields.Integer,
+            'birthdate': fields.DateTime,
         })
 
         @ns.route('/validation/')
-        class Payload(sanic_restplus.Resource):
+        class Payload(Resource):
             payload = None
 
-            @ns.expect(fields)
+            @ns.expect(f)
             async def post(self, request):
                 Payload.payload = ns.payload
                 return {}

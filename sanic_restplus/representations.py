@@ -21,6 +21,17 @@ from json import dumps
 
 from sanic.response import text, HTTPResponse
 
+try:
+    # Test to see if this works...
+    test_resp = HTTPResponse(body=None, status=200, body_bytes=b"test")
+    use_body_bytes = True
+except TypeError:
+    try:
+        test_resp = HTTPResponse(body="test", status=200)
+        use_body_bytes = False
+    except TypeError:
+        raise RuntimeError("Cannot determine how to correctly return a HTTPResponse with bytes content.")
+
 def output_json_pretty(request, data, code, headers=None):
     '''Makes a Flask response with a JSON encoded body'''
     current_app = request.app
@@ -64,7 +75,10 @@ elif has_orjson:
             return output_json_pretty(request, data, code, headers=headers)
         settings = current_app.config.get('RESTPLUS_JSON', {})
         dumped = fast_dumps(data, option=orjson_opts, default=orjson_default, **settings) + b"\n"
-        resp = HTTPResponse(None, code, headers, content_type='application/json', body_bytes=dumped)
+        if use_body_bytes:
+            resp = HTTPResponse(None, code, headers, content_type='application/json', body_bytes=dumped)
+        else:
+            resp = HTTPResponse(dumped, code, headers, content_type='application/json')
         return resp
     output_json_fast = output_json_fast_orjson
 else:

@@ -266,7 +266,7 @@ class ErrorsTest(object):
         assert 'message' in data
 
     async def test_default_errorhandler_with_propagate_true(self, app, client):
-        blueprint = Blueprint('api', __name__, url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint)
 
         @api.route('/test/')

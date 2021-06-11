@@ -228,7 +228,7 @@ Each `apivX` module will have the following pattern:
     # ...
     from .apis.namespaceX import api as nsX
 
-    blueprint = Blueprint('api', __name__, url_prefix='/api/1')
+    blueprint = Blueprint('api', url_prefix='/api/1')
     api = Api(blueprint
         title='My Title',
         version='1.0',

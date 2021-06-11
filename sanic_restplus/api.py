@@ -16,22 +16,17 @@ from functools import wraps, partial, lru_cache, update_wrapper
 from types import MethodType
 
 from jinja2 import PackageLoader
-from sanic.router import RouteExists, url_hash
+from sanic_routing.exceptions import RouteExists #, url_hash
 from sanic.response import text, BaseHTTPResponse
 from sanic.views import HTTPMethodView
 from sanic_jinja2 import SanicJinja2
-from spf.plugin import FutureRoute, FutureStatic
+from sanic_plugin_toolkit.plugin import FutureRoute, FutureStatic
 
-try:
-    from sanic.helpers import STATUS_CODES as ALL_STATUS_CODES
-except ImportError:
-    try:
-        from sanic.response import ALL_STATUS_CODES
-    except ImportError:
-        from sanic.response import STATUS_CODES as ALL_STATUS_CODES
+from sanic.helpers import STATUS_CODES
 from sanic.handlers import ErrorHandler
 from sanic.exceptions import SanicException, InvalidUsage, NotFound
 from sanic import exceptions, Sanic, Blueprint
+from sanic.base import BaseSanic
 try:
     from sanic.compat import Header
 except ImportError:
@@ -39,7 +34,8 @@ except ImportError:
         from sanic.server import CIMultiDict as Header
     except ImportError:
         from sanic.server import CIDict as Header
-from spf import SanicPluginsFramework
+from sanic_plugin_toolkit.plugin import SanicPlugin
+from sanic_plugin_toolkit.realm import SanicPluginRealm
 from jsonschema import RefResolver
 
 from .restplus import restplus
@@ -101,15 +97,15 @@ class Api(object):
     '''
 
     uid_counter = 0
-    def __init__(self, spf_reg=None, version='1.0', title=None, description=None,
-            terms_url=None, license=None, license_url=None,
-            contact=None, contact_url=None, contact_email=None,
-            authorizations=None, security=None, doc='/', default_id=default_id,
-            default='default', default_label='Default namespace', validate=None,
-            tags=None, prefix='', ordered=False,
-            default_mediatype='application/json', decorators=None,
-            catch_all_404s=False, serve_challenge_on_401=False, format_checker=None,
-            additional_css=None, **kwargs):
+    def __init__(self, plugin_reg=None, version='1.0', title=None, description=None,
+                 terms_url=None, license=None, license_url=None,
+                 contact=None, contact_url=None, contact_email=None,
+                 authorizations=None, security=None, doc='/', default_id=default_id,
+                 default='default', default_label='Default namespace', validate=None,
+                 tags=None, prefix='', ordered=False,
+                 default_mediatype='application/json', decorators=None,
+                 catch_all_404s=False, serve_challenge_on_401=False, format_checker=None,
+                 additional_css=None, **kwargs):
         self.version = version
         self.title = title or 'API'
         self.description = description
@@ -145,10 +141,7 @@ class Api(object):
             path='/',
         )
         self.ns_paths = dict()
-        if py_36 > cur_py_version: #py3.5 or below
-            self.representations = OrderedDict(DEFAULT_REPRESENTATIONS)
-        else:
-            self.representations = dict(DEFAULT_REPRESENTATIONS)
+        self.representations = dict(DEFAULT_REPRESENTATIONS)
         self.urls = {}
         self.prefix = prefix
         self.default_mediatype = default_mediatype
@@ -158,29 +151,29 @@ class Api(object):
         self.blueprint_setup = None
         self.endpoints = set()
         self.resources = []
-        self.spf_reg = None
+        self.plugin_reg = None
         self.blueprint = None
         self.additional_css = additional_css
         Api.uid_counter += 1
         self._uid = Api.uid_counter
 
-        if spf_reg is not None:
-            if isinstance(spf_reg, Sanic):
+        if plugin_reg is not None:
+            if isinstance(plugin_reg, BaseSanic):
                 # use legacy init method
-                spf = SanicPluginsFramework(spf_reg)
+                realm = SanicPluginRealm(plugin_reg)
                 try:
-                    spf_reg = restplus.find_plugin_registration(spf)
+                    plugin_reg = restplus.find_plugin_registration(realm)
                 except LookupError:
-                    raise RuntimeError("Cannot create Api before sanic_restplus is registered on the SPF.")
-            self.init_api(reg=spf_reg, **kwargs)
+                    raise RuntimeError("Cannot create Api before sanic_restplus is registered on SPTK.")
+            self.init_api(reg=plugin_reg, **kwargs)
 
     def init_api(self, reg=None, **kwargs):
         '''
-        Allow to lazy register the API on a SPF instance::
+        Allow to lazy register the API on a SPTK instance::
 
         >>> app = Sanic(__name__)
-        >>> spf = SanicPluginsFramework(app)
-        >>> reg = spf.register_plugin(restplus)
+        >>> realm = SanicPluginRealm(app)
+        >>> reg = realm.register_plugin(restplus)
         >>> api = Api()
         >>> api.init_api(reg)
 
@@ -193,11 +186,11 @@ class Api(object):
         :param str license_url: The license page URL (used in Swagger documentation)
 
         '''
-        if self.spf_reg is None:
+        if self.plugin_reg is None:
             if reg is not None:
-                self.spf_reg = reg
+                self.plugin_reg = reg
             else:
-                raise RuntimeError("Cannot init_api without self.spf_reg")
+                raise RuntimeError("Cannot init_api without self.plugin_reg")
         self.title = kwargs.get('title', self.title)
         self.description = kwargs.get('description', self.description)
         self.terms_url = kwargs.get('terms_url', self.terms_url)
@@ -209,7 +202,7 @@ class Api(object):
         self.additional_css = kwargs.get('additional_css', self.additional_css)
         self._add_specs = kwargs.get('add_specs', True)
 
-        context = restplus.get_context_from_spf(self.spf_reg)
+        context = restplus.get_context_from_realm(self.plugin_reg)
         app = context.app
         # If app is a blueprint, defer the initialization
         if isinstance(app, Blueprint):
@@ -270,7 +263,7 @@ class Api(object):
         return ''.join(part for part in parts if part)
 
     # def _register_apidoc(self, app):
-    #     context = restplus.get_context_from_spf(self.spf_reg)
+    #     context = restplus.get_context_from_realm(self.plugin_reg)
     #     if not context.get('apidoc_registered', False):
     #         app.blueprint(apidoc.apidoc, url_prefix=self.prefix)
     #         context['apidoc_registered'] = True
@@ -278,19 +271,22 @@ class Api(object):
     #         warnings.warn("Attempting to re-register the apidoc blueprint, skipped.")
 
     def _setup_jinja2_renderer(self):
-        spf, plugin_name, plugin_prefix = self.spf_reg
-        loader = PackageLoader(__name__, 'templates')
+        realm, plugin_name, plugin_prefix = self.plugin_reg
+        package_name = str(__name__)
+        if package_name.endswith(".api"):
+            package_name = package_name[:-4]
+        loader = PackageLoader(package_name, 'templates')
         enable_async = cur_py_version >= async_req_version
-        context = restplus.get_context_from_spf(self.spf_reg)
+        context = restplus.get_context_from_realm(self.plugin_reg)
         # Don't try to use an already registered Jinja2-plugin, it causes too much incompatibility with template
         # loaders. Just use a new one of our own.
         j2 = SanicJinja2(context.app, loader=loader, pkg_name=plugin_name, enable_async=enable_async)
 
         def swagger_static(filename):
             nonlocal self
-            spf, plugin_name, plugin_prefix = self.spf_reg
+            realm, plugin_name, plugin_prefix = self.plugin_reg
             endpoint = '{}.static'.format(str(self._uid))
-            return restplus.spf_resolve_url_for(spf, endpoint, filename=filename)
+            return restplus.resolve_url_for(realm, endpoint, filename=filename)
 
         def config():
             nonlocal self, context
@@ -318,17 +314,24 @@ class Api(object):
         return api_renderer
 
     def _register_static(self):
-        (spf, plugin_name, plugin_url_prefix) = self.spf_reg
-        context = restplus.get_context_from_spf(self.spf_reg)
+        (realm, plugin_name, plugin_url_prefix) = self.plugin_reg
+        context = restplus.get_context_from_realm(self.plugin_reg)
         module_path = os.path.abspath(os.path.dirname(__file__))
         module_static = os.path.join(module_path, 'static')
         endpoint = '{}.static'.format(str(self._uid))
         kwargs = { "name": endpoint }
+        kwargs.setdefault('pattern', r'/?.+')
+        kwargs.setdefault('use_modified_since', True)
+        kwargs.setdefault('use_content_range', False)
+        kwargs.setdefault('stream_large_files', False)
+        kwargs.setdefault('host', None)
+        kwargs.setdefault('strict_slashes', None)
+        kwargs.setdefault('content_type', None)
         if os.path.isdir(module_static):
             s = FutureStatic('/swaggerui', module_static, (), kwargs)
         else:
             s = FutureStatic('/swaggerui', './sanic_restplus/static', (), kwargs)
-        spf._register_static_helper(s, spf, restplus, context, plugin_name, plugin_url_prefix)
+        realm._register_static_helper(s, realm, restplus, context, plugin_name, plugin_url_prefix)
 
 
     def _register_specs(self):
@@ -345,8 +348,19 @@ class Api(object):
 
     def _register_doc(self, api_renderer):
         root_path = self.prefix or '/'
-        (spf, plugin_name, plugin_url_prefix) = self.spf_reg
-        context = restplus.get_context_from_spf(self.spf_reg)
+        (realm, plugin_name, plugin_url_prefix) = self.plugin_reg
+        context = restplus.get_context_from_realm(self.plugin_reg)
+        route_kwargs = {"methods": ['GET']}
+        route_kwargs.setdefault('host', None)
+        route_kwargs.setdefault('strict_slashes', False)
+        route_kwargs.setdefault('stream', False)
+        route_kwargs.setdefault('name', None)
+        route_kwargs.setdefault('version', None)
+        route_kwargs.setdefault('ignore_body', False)
+        route_kwargs.setdefault('websocket', False)
+        route_kwargs.setdefault('subprotocols', None)
+        route_kwargs.setdefault('unquote', False)
+        route_kwargs.setdefault('static', False)
         if self._add_specs and self._doc:
             doc_endpoint_name = '{}_doc'.format(str(self._uid))
 
@@ -355,8 +369,8 @@ class Api(object):
                 return self.render_doc(*args, api_renderer=api_renderer, **kwargs)
             render_doc = wraps(self.render_doc)(_render_doc)
             render_doc.__name__ = doc_endpoint_name
-            r = FutureRoute(render_doc, self._doc, (), {'with_context': True})
-            spf._register_route_helper(r, spf, restplus, context, plugin_name, plugin_url_prefix)
+            r = FutureRoute(render_doc, self._doc, (), {'with_context': True, **route_kwargs})
+            realm._register_route_helper(r, realm, restplus, context, plugin_name, plugin_url_prefix)
         if self._doc != root_path:
             try:# app_or_blueprint.add_url_rule(self.prefix or '/', 'root', self.render_root)
                 root_endpoint_name = '{}_root'.format(str(self._uid))
@@ -365,8 +379,8 @@ class Api(object):
                     return self.render_root(*args, **kwargs)
                 render_root = wraps(self.render_root)(_render_root)
                 render_root.__name__ = root_endpoint_name
-                r = FutureRoute(render_root, root_path, (), {})
-                spf._register_route_helper(r, spf, restplus, context, plugin_name, plugin_url_prefix)
+                r = FutureRoute(render_root, root_path, (), route_kwargs)
+                realm._register_route_helper(r, realm, restplus, context, plugin_name, plugin_url_prefix)
 
             except RouteExists:
                 pass
@@ -378,7 +392,7 @@ class Api(object):
         kwargs['endpoint'] = endpoint
         self.endpoints.add(endpoint)
 
-        if self.spf_reg is not None:
+        if self.plugin_reg is not None:
             self._register_view(resource, namespace, *urls, **kwargs)
         else:
             self.resources.append((resource, namespace, urls, kwargs))
@@ -388,7 +402,7 @@ class Api(object):
         endpoint = kwargs.pop('endpoint', None) or camel_to_dash(resource.__name__)
         resource_class_args = kwargs.pop('resource_class_args', ())
         resource_class_kwargs = kwargs.pop('resource_class_kwargs', {})
-        (spf, plugin_name, plugin_url_prefix) = self.spf_reg
+        (realm, plugin_name, plugin_url_prefix) = self.plugin_reg
         resource.mediatypes = self.mediatypes_method()  # Hacky
         resource.endpoint = endpoint
         methods = resource.methods
@@ -403,7 +417,7 @@ class Api(object):
         for decorator in chain(namespace.decorators, self.decorators):
             resource_func = decorator(resource_func)
 
-        context = restplus.get_context_from_spf(self.spf_reg)
+        context = restplus.get_context_from_realm(self.plugin_reg)
         for url in urls:
             # If this Api has a blueprint
             if self.blueprint:
@@ -423,9 +437,19 @@ class Api(object):
             else:
                 # If we've got no Blueprint, just build a url with no prefix
                 rule = self._complete_url(url, '')
+            kwargs.setdefault('host', None)
+            kwargs.setdefault('strict_slashes', True)
+            kwargs.setdefault('stream', False)
+            kwargs.setdefault('name', None)
+            kwargs.setdefault('version', None)
+            kwargs.setdefault('ignore_body', False)
+            kwargs.setdefault('websocket', False)
+            kwargs.setdefault('subprotocols', None)
+            kwargs.setdefault('unquote', False)
+            kwargs.setdefault('static', False)
             # Add the url to the application or blueprint
-            r = FutureRoute(resource_func, rule, (), {'methods': methods, 'with_context': True})
-            spf._register_route_helper(r, spf, restplus, context, plugin_name, plugin_url_prefix)
+            r = FutureRoute(resource_func, rule, (), {'methods': methods, 'with_context': True, **kwargs})
+            realm._register_route_helper(r, realm, restplus, context, plugin_name, plugin_url_prefix)
 
     def output(self, resource):
         """
@@ -586,7 +610,7 @@ class Api(object):
         :rtype: str
         '''
         try:
-            specs_url = restplus.spf_resolve_url_for(self.spf_reg, self.endpoint('{}_specs'.format(str(self._uid))), _external=False)
+            specs_url = restplus.resolve_url_for(self.plugin_reg, self.endpoint('{}_specs'.format(str(self._uid))), _external=False)
         except (AttributeError, KeyError):
             raise RuntimeError("The API object does not have an `app` assigned.")
         return specs_url
@@ -600,9 +624,9 @@ class Api(object):
         root_path = self.prefix or '/'
         try:
             if self._doc == root_path:
-                base_url = restplus.spf_resolve_url_for(self.spf_reg, self.endpoint('{}_doc'.format(str(self._uid))), _external=False)
+                base_url = restplus.resolve_url_for(self.plugin_reg, self.endpoint('{}_doc'.format(str(self._uid))), _external=False)
             else:
-                base_url = restplus.spf_resolve_url_for(self.spf_reg, self.endpoint('{}_root'.format(str(self._uid))), _external=False)
+                base_url = restplus.resolve_url_for(self.plugin_reg, self.endpoint('{}_root'.format(str(self._uid))), _external=False)
         except (AttributeError, KeyError):
             raise RuntimeError("The API object does not have an `app` assigned.")
         return base_url
@@ -616,12 +640,12 @@ class Api(object):
         :rtype: str
         '''
         root_path = self.prefix or '/'
-        (spf, _, _) = self.spf_reg
+        (realm, _, _) = self.plugin_reg
         try:
             if self._doc == root_path:
-                base_url = restplus.spf_resolve_url_for(self.spf_reg, self.endpoint('{}_doc'.format(str(self._uid))))
+                base_url = restplus.resolve_url_for(self.plugin_reg, self.endpoint('{}_doc'.format(str(self._uid))))
             else:
-                base_url = restplus.spf_resolve_url_for(self.spf_reg, self.endpoint('{}_root'.format(str(self._uid))))
+                base_url = restplus.resolve_url_for(self.plugin_reg, self.endpoint('{}_root'.format(str(self._uid))))
         except (AttributeError, KeyError):
             raise RuntimeError("The API object does not have an `app` assigned.")
         return base_url
@@ -742,7 +766,7 @@ class Api(object):
         try:
             return self._dummy_router_get(app.router, request.method, request)
         except InvalidUsage as e:
-            (_, plugin_name, _) = self.spf_reg
+            (_, plugin_name, _) = self.plugin_reg
             plugin_name_prefix = "{}.".format(plugin_name)
             # Check if the other HTTP methods at this url would hit the Api
             try:
@@ -773,7 +797,7 @@ class Api(object):
         if not route or not route.handler or not route.name:
             return False
         route_endpoint_name = route.name
-        (_, plugin_name, _) = self.spf_reg
+        (_, plugin_name, _) = self.plugin_reg
         plugin_name_prefix = "{}.".format(plugin_name)
         if str(route_endpoint_name).startswith(plugin_name_prefix):
             route_endpoint_name = route_endpoint_name[len(plugin_name_prefix):]
@@ -788,7 +812,7 @@ class Api(object):
         :param e: the raised Exception object
         :type e: Exception
         """
-        context = restplus.get_context_from_spf(self.spf_reg)
+        context = restplus.get_context_from_realm(self.plugin_reg)
         app = context.app
         #got_request_exception.send(app._get_current_object(), exception=e)
         if not isinstance(e, SanicException) and app.config.get('PROPAGATE_EXCEPTIONS', False):
@@ -814,7 +838,7 @@ class Api(object):
                     status = e.args[0]
                     assert isinstance(status, (str, bytes))
                 except (AttributeError, LookupError, AssertionError):
-                    if sanic_code is 200:
+                    if sanic_code == 200:
                         status = b'OK'
                     # x is y comparison only works between -5 and 256
                     elif sanic_code == 404:
@@ -822,7 +846,7 @@ class Api(object):
                     elif sanic_code == 500:
                         status = b'Internal Server Error'
                     else:
-                        status = ALL_STATUS_CODES.get(int(sanic_code))
+                        status = STATUS_CODES.get(int(sanic_code))
                 code = HTTPStatus(sanic_code, None)
                 if status and isinstance(status, bytes):
                     status = status.decode('ascii')
@@ -836,7 +860,7 @@ class Api(object):
                 default_data, code, headers = unpack(result, HTTPStatus.INTERNAL_SERVER_ERROR)
             else:
                 code = HTTPStatus.INTERNAL_SERVER_ERROR
-                status = ALL_STATUS_CODES.get(code.value, str(e))
+                status = STATUS_CODES.get(code.value, str(e))
                 if status and isinstance(status, bytes):
                     status = status.decode('ascii')
                 if include_message_in_response:
@@ -1034,10 +1058,10 @@ class Api(object):
         Works like :func:`app.url_for`.
         '''
         endpoint = resource.endpoint
-        (spf, _, _) = self.spf_reg
+        (realm, _, _) = self.plugin_reg
         if self.blueprint:
             endpoint = '{0}.{1}'.format(self.blueprint.name, endpoint)
-        return restplus.spf_resolve_url_for(self.spf_reg, endpoint, **values)
+        return restplus.resolve_url_for(self.plugin_reg, endpoint, **values)
 
 
 class ApiErrorHandler(ErrorHandler):

@@ -932,7 +932,7 @@ You can control the Swagger UI path with the ``doc`` parameter (defaults to the 
     from flask_restplus import Api
 
     app = Flask(__name__)
-    blueprint = Blueprint('api', __name__, url_prefix='/api')
+    blueprint = Blueprint('api', url_prefix='/api')
     api = Api(blueprint, doc='/doc/')
 
     app.register_blueprint(blueprint)

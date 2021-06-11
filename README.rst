@@ -12,18 +12,21 @@ and expose its documentation properly using `Swagger`_.
 Compatibility
 =============
 
-Sanic-RestPlus requires Python 3.5+.
-Sanic-RestPlus works with Sanic v18.12+
+* Sanic-RestPlus requires Python 3.7+.
+* Sanic-RestPlus works with Sanic v21.3+
+
 
 
 Important Compatibility Notice
 ------------------------------
 
+Sanic-RestPlus version 0.6.0 was reworked and now requires Sanic v21.3 or later.
+
 Sanic-RestPlus version 0.4.1 (and previous versions) **does not work** on Sanic 19.12+, see this bug here: https://github.com/ashleysommer/sanicpluginsframework/issues/15
 
-Please use latest Sanic-Restplus (v0.5.3 or greater) if you need to deploy on Sanic v19.12+.
+Please use Sanic-Restplus v0.5.x if you need to deploy on Sanic v19.12 or v20.12
 
-If you are using the new Sanic v20.12LTS, please use Sanic-RestPlus v0.5.5 or greater.
+If you are using the Sanic v20.12LTS, please use Sanic-RestPlus v0.5.6.
 
 
 Installation
@@ -52,10 +55,10 @@ With Sanic-Restplus, you only import the api instance to route and document your
     from sanic import Sanic
     from sanic_restplus import Api, Resource, fields
     from sanic_restplus.restplus import restplus
-    from spf import SanicPluginsFramework
+    from sanic_plugin_toolkit import SanicPluginRealm
     app = Sanic(__name__)
-    spf = SanicPluginsFramework(app)
-    rest_assoc = spf.register_plugin(restplus)
+    realm = SanicPluginRealm(app)
+    rest_assoc = realm.register_plugin(restplus)
 
     api = Api(version='1.0', title='TodoMVC API',
               description='A simple TodoMVC API')

@@ -7,7 +7,7 @@ from decimal import Decimal
 from functools import partial
 
 import pytest
-from spf import SanicPluginsFramework
+from sanic_plugin_toolkit import SanicPluginRealm
 from sanic import Blueprint
 from sanic_restplus import fields, Api, restplus
 cet = timezone(timedelta(hours=1), 'CET')
@@ -18,8 +18,8 @@ class FieldTestCase(object):
     @pytest.fixture
     def api(self, app):
         blueprint = Blueprint('api', __name__)
-        spf = SanicPluginsFramework(blueprint)
-        plugin, reg = spf.register_plugin(restplus)
+        realm = SanicPluginRealm(blueprint)
+        plugin, reg = realm.register_plugin(restplus)
         api = Api(reg)
         app.register_blueprint(blueprint)
         yield api

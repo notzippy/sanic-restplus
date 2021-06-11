@@ -70,8 +70,8 @@ long_description = '\n'.join((
 exec(compile(open('sanic_restplus/__about__.py', encoding="latin-1").read(), 'sanic_restplus/__about__.py', 'exec'))
 
 install_requires = pip('install')
-if sys.version_info < (3, 5):
-    raise RuntimeError("Cannot install on Python version < 3.5")
+if sys.version_info < (3, 7):
+    raise RuntimeError("Cannot install on Python version < 3.7")
 doc_require = pip('doc')
 tests_require = pip('test')
 
@@ -89,6 +89,7 @@ setup(
             ['RestPlus = sanic_restplus.restplus:instance']
     },
     include_package_data=True,
+    python_requires=">=3.7",
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={
@@ -112,9 +113,9 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',

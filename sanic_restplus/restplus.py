@@ -1,6 +1,6 @@
-from sanic import Sanic, Blueprint
-from spf import SanicPlugin, SanicPluginsFramework
-from spf.plugin import PluginRegistration, PluginAssociated
+from sanic.base import BaseSanic
+from sanic_plugin_toolkit.plugin import SanicPlugin, PluginRegistration, PluginAssociated
+from sanic_plugin_toolkit.realm import SanicPluginRealm
 
 
 class RestPlusAssociated(PluginAssociated):
@@ -31,30 +31,30 @@ class RestPlus(SanicPlugin):
             context['apis'] = apis = set()
         app = context.app
         try:
-            ext = getattr(app, 'extensions', None)
+            ext = getattr(app.ctx, 'extensions', None)
             assert ext is not None
         except (AttributeError, AssertionError):
-            setattr(app, 'extensions', dict())
+            setattr(app.ctx, 'extensions', dict())
 
     def api(self, reg, *args, api_class=None, **kwargs):
         from .api import Api
         if isinstance(reg, PluginAssociated):
             (pl, reg) = reg
-            (spf, _, _) = reg
+            (realm, _, _) = reg
         elif isinstance(reg, PluginRegistration):
-            (spf, _, _) = reg
-        elif isinstance(reg, SanicPluginsFramework):
-            spf = reg
-            reg = self.find_plugin_registration(spf)
-        elif isinstance(reg, Sanic):
+            (realm, _, _) = reg
+        elif isinstance(reg, SanicPluginRealm):
+            realm = reg
+            reg = self.find_plugin_registration(realm)
+        elif isinstance(reg, BaseSanic):
             app = reg
-            spf = SanicPluginsFramework(app)
-            reg = self.find_plugin_registration(spf)
+            realm = SanicPluginRealm(app)
+            reg = self.find_plugin_registration(realm)
         else:
-            raise RuntimeError("the 'reg' argument must be a SPF, an Association, Registration, or an App!")
-        context = self.get_context_from_spf(reg)
+            raise RuntimeError("the 'reg' argument must be a Realm, an Association, Registration, or an App!")
+        context = self.get_context_from_realm(reg)
         app = context.app
-        assert isinstance(app, (Sanic, Blueprint))
+        assert isinstance(app, BaseSanic)
         if api_class is None:
             if args and len(args) > 0 and isinstance(args[0], Api):
                 args = list(args)

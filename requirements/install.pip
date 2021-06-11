@@ -1,6 +1,6 @@
 aniso8601>=0.82
 jsonschema
 methodtools
-sanic>=18.12.0,<21
-sanic-jinja2-spf>=0.8.0
-sanic-plugins-framework>=0.9.5
+sanic>=21.3.4,<22
+sanic-jinja2>=0.10.0
+sanic-plugin-toolkit>=1.0.1

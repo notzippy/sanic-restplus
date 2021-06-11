@@ -3,10 +3,10 @@ from sanic import Sanic
 from sanic_restplus import Api, fields, Resource
 from sanic_restplus.cors import crossdomain
 from sanic_restplus.restplus import restplus
-from spf import SanicPluginsFramework
+from sanic_plugin_toolkit import SanicPluginRealm
 app = Sanic(__name__)
-spf = SanicPluginsFramework(app)
-rest_assoc = spf.register_plugin(restplus)
+realm = SanicPluginRealm(app)
+rest_assoc = realm.register_plugin(restplus)
 
 api = Api(version='1.0', title='Todo API',
           description='A simple TODO API')

@@ -235,7 +235,7 @@ class Swagger(object):
         return not_none(specs)
 
     def get_host(self):
-        current_app = restplus.get_app_from_spf_context(self.api.spf_reg)
+        current_app = restplus.get_app_from_realm_context(self.api.plugin_reg)
         hostname = current_app.config.get('SERVER_NAME', None) or None
         if hostname and self.api.blueprint and self.api.blueprint.subdomain:
             hostname = '.'.join((self.api.blueprint.subdomain, hostname))
@@ -476,7 +476,7 @@ class Swagger(object):
             params.append(param)
 
         # Handle fields mask
-        context = restplus.get_context_from_spf(self.api.spf_reg)
+        context = restplus.get_context_from_realm(self.api.plugin_reg)
         mask = doc.get('__mask__')
         if mask and context.get('MASK_SWAGGER', False):
             param = {

@@ -26,7 +26,7 @@ class APITest(object):
             assert api.base_url == 'http://localhost/'
 
     def test_root_endpoint_with_blueprint(self, app):
-        blueprint = Blueprint('api', __name__, url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint, version='1.0')
         app.register_blueprint(blueprint)
 
@@ -36,7 +36,7 @@ class APITest(object):
             assert api.base_url == 'http://localhost/api/'
 
     def test_root_endpoint_with_blueprint_with_subdomain(self, app):
-        blueprint = Blueprint('api', __name__, subdomain='api', url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint, version='1.0')
         app.register_blueprint(blueprint)
 
@@ -47,7 +47,7 @@ class APITest(object):
 
     def test_parser(self):
         api = sanic_restplus.Api()
-        assert isinstance(api.parser(), restplus.reqparse.RequestParser)
+        assert isinstance(api.parser(), sanic_restplus.reqparse.RequestParser)
 
     def test_doc_decorator(self, app):
         api = sanic_restplus.Api(app, prefix='/api', version='1.0')
@@ -117,7 +117,7 @@ class APITest(object):
             assert url_for('test_resource') == '/test/'
 
     def test_default_endpoint_with_blueprint(self, app):
-        blueprint = Blueprint('api', __name__, url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint)
         app.register_blueprint(blueprint)
 
@@ -129,7 +129,7 @@ class APITest(object):
             assert url_for('api.test_resource') == '/api/test/'
 
     def test_default_endpoint_with_blueprint_with_subdomain(self, app):
-        blueprint = Blueprint('api', __name__, subdomain='api', url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint)
         app.register_blueprint(blueprint)
 
@@ -165,7 +165,7 @@ class APITest(object):
             assert url_for('ns_test_resource') == '/ns/test/'
 
     def test_default_endpoint_for_namespace_with_blueprint(self, app):
-        blueprint = Blueprint('api', __name__, url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint)
         ns = api.namespace('ns', 'Test namespace')
 
@@ -233,7 +233,7 @@ class APITest(object):
             assert url_for('ns_test_resource_2') == '/ns/test2/'
 
     def test_multiple_default_endpoint_for_namespace_with_blueprint(self, app):
-        blueprint = Blueprint('api', __name__, url_prefix='/api')
+        blueprint = Blueprint('api', url_prefix='/api')
         api = sanic_restplus.Api(blueprint)
         ns = api.namespace('ns', 'Test namespace')
 

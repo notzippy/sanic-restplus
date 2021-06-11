@@ -162,7 +162,7 @@ class SwaggerTest(object):
 
     @pytest.mark.options(server_name='api.restplus.org')
     def test_specs_endpoint_host_with_url_prefix(self, app, client):
-        blueprint = Blueprint('api', __name__, url_prefix='/api/1')
+        blueprint = Blueprint('api', url_prefix='/api/1')
         sanic_restplus.Api(blueprint)
         app.register_blueprint(blueprint)
 
@@ -172,7 +172,7 @@ class SwaggerTest(object):
 
     @pytest.mark.options(server_name='restplus.org')
     def test_specs_endpoint_host_and_subdomain(self, app, client):
-        blueprint = Blueprint('api', __name__, subdomain='api')
+        blueprint = Blueprint('api', __name__)
         sanic_restplus.Api(blueprint)
         app.register_blueprint(blueprint)
 

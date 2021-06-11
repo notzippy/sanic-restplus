@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
-
+import pytest_asyncio
 from sanic import Sanic, Blueprint
-from sanic.websocket import WebSocketProtocol
 from uuid import uuid4
-from spf import SanicPluginsFramework
+from sanic_plugin_toolkit import SanicPluginRealm
 import sanic_restplus
 from sanic_restplus import restplus
 
@@ -27,13 +26,15 @@ from sanic_restplus import restplus
 #         return self.get_json('{0}/swagger.json'.format(prefix), status=status, **kwargs)
 
 
+pytestmark = pytest.mark.asyncio
+
 @pytest.fixture
 def app():
     guid = str(uuid4())
     app = Sanic(__name__+guid)
     #app.test_client_class = TestClient
-    spf = SanicPluginsFramework(app)
-    spf.register_plugin(restplus)
+    realm = SanicPluginRealm(app)
+    realm.register_plugin(restplus)
     yield app
 
 
@@ -48,7 +49,7 @@ def api(request, app):
         if 'subdomain' in marker.kwargs:
             bpkwargs['subdomain'] = marker.kwargs.pop('subdomain')
         kwargs = marker.kwargs
-    blueprint = Blueprint('api', __name__, **bpkwargs)
+    blueprint = Blueprint('api', **bpkwargs)
     api = sanic_restplus.Api(blueprint, **kwargs)
     app.register_blueprint(blueprint)
     yield api

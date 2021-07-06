@@ -26,6 +26,7 @@ from sanic.helpers import STATUS_CODES
 from sanic.handlers import ErrorHandler
 from sanic.exceptions import SanicException, InvalidUsage, NotFound
 from sanic import exceptions, Sanic, Blueprint
+from sanic.models.futures import FutureRoute as FutureRouteActual
 from sanic.base import BaseSanic
 try:
     from sanic.compat import Header
@@ -356,6 +357,8 @@ class Api(object):
         route_kwargs.setdefault('stream', False)
         route_kwargs.setdefault('name', None)
         route_kwargs.setdefault('version', None)
+        if hasattr(FutureRouteActual, 'version_prefix'):
+            route_kwargs.setdefault('version_prefix', None)
         route_kwargs.setdefault('ignore_body', False)
         route_kwargs.setdefault('websocket', False)
         route_kwargs.setdefault('subprotocols', None)
@@ -442,6 +445,9 @@ class Api(object):
             kwargs.setdefault('stream', False)
             kwargs.setdefault('name', None)
             kwargs.setdefault('version', None)
+            if hasattr(FutureRouteActual, 'version_prefix'):
+                kwargs.setdefault('version_prefix', None)
+
             kwargs.setdefault('ignore_body', False)
             kwargs.setdefault('websocket', False)
             kwargs.setdefault('subprotocols', None)

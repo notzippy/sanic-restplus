@@ -14,7 +14,7 @@ import traceback
 
 from functools import wraps, partial, lru_cache, update_wrapper
 from types import MethodType
-
+from distutils.version import LooseVersion
 from jinja2 import PackageLoader
 from sanic_routing.exceptions import RouteExists #, url_hash
 from sanic.response import text, BaseHTTPResponse
@@ -26,7 +26,7 @@ from sanic.helpers import STATUS_CODES
 from sanic.handlers import ErrorHandler
 from sanic.exceptions import SanicException, InvalidUsage, NotFound
 from sanic import exceptions, Sanic, Blueprint
-from sanic.models.futures import FutureRoute as FutureRouteActual
+from sanic import __version__ as sanic_version
 from sanic.base import BaseSanic
 try:
     from sanic.compat import Header
@@ -52,7 +52,8 @@ from ._http import HTTPStatus
 
 py_36 = (3, 6)
 async_req_version = py_36
-
+SANIC_VERSION = LooseVersion(sanic_version)
+SANIC_21_6_0 = LooseVersion("21.6.0")
 RE_RULES = re.compile('(<.*>)')
 
 # List headers that should never be handled by Flask-RESTPlus
@@ -357,13 +358,13 @@ class Api(object):
         route_kwargs.setdefault('stream', False)
         route_kwargs.setdefault('name', None)
         route_kwargs.setdefault('version', None)
-        if hasattr(FutureRouteActual, 'version_prefix'):
-            route_kwargs.setdefault('version_prefix', None)
         route_kwargs.setdefault('ignore_body', False)
         route_kwargs.setdefault('websocket', False)
         route_kwargs.setdefault('subprotocols', None)
         route_kwargs.setdefault('unquote', False)
         route_kwargs.setdefault('static', False)
+        if SANIC_21_6_0 <= SANIC_VERSION:
+            route_kwargs.setdefault('version_prefix', None)
         if self._add_specs and self._doc:
             doc_endpoint_name = '{}_doc'.format(str(self._uid))
 
@@ -445,14 +446,13 @@ class Api(object):
             kwargs.setdefault('stream', False)
             kwargs.setdefault('name', None)
             kwargs.setdefault('version', None)
-            if hasattr(FutureRouteActual, 'version_prefix'):
-                kwargs.setdefault('version_prefix', None)
-
             kwargs.setdefault('ignore_body', False)
             kwargs.setdefault('websocket', False)
             kwargs.setdefault('subprotocols', None)
             kwargs.setdefault('unquote', False)
             kwargs.setdefault('static', False)
+            if SANIC_21_6_0 <= SANIC_VERSION:
+                kwargs.setdefault('version_prefix', None)
             # Add the url to the application or blueprint
             r = FutureRoute(resource_func, rule, (), {'methods': methods, 'with_context': True, **kwargs})
             realm._register_route_helper(r, realm, restplus, context, plugin_name, plugin_url_prefix)

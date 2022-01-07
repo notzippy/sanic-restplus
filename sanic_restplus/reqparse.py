@@ -2,7 +2,7 @@
 #
 import decimal
 from sanic import exceptions
-from collections import Hashable
+from collections.abc import Hashable
 from copy import deepcopy
 
 from .errors import abort, SpecsError

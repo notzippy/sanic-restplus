@@ -5,7 +5,7 @@ import re
 import warnings
 
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from functools import lru_cache
 
 from .mask import Mask
